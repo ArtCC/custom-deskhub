@@ -1,24 +1,14 @@
-/**
- * Express API server that provides endpoints for display control and GitHub contributions
- * @module server
- * @requires express
- * @requires https
- */
-
 const express = require('express');
 const https = require('https');
-
-// Environment constants
-const LOCALHOST = process.env.LOCALHOST;
-const PORT = process.env.PORT;
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_USERNAME = process.env.GITHUB_USERNAME;
-
-// Initialize Express
+const LOCALHOST = process.env.LOCALHOST;
+const PORT = process.env.PORT;
 const app = express();
 
-// Global state
-let isEnabled = true;
+let shutdownOnNightIsEnabled = false;
+let isEnabled = false;
+let newText = "";
 
 /**
  * Updates isEnabled state based on server's local time
@@ -26,108 +16,57 @@ let isEnabled = true;
  * Disabled: 22:00 - 7:59
  */
 function updateStateByHour() {
-    const hour = new Date().getHours();
-    
-    isEnabled = hour >= 8 && hour < 22;
+    if (shutdownOnNightIsEnabled) {
+        const hour = new Date().getHours();
+       
+        isEnabled = hour >= 8 && hour < 22;
+    }
 }
 
-// Schedule state updates
 setInterval(updateStateByHour, 60000);
 updateStateByHour();
 
-/**
- * Fetches GitHub contributions data using GraphQL API
- * @async
- * @returns {Promise<Object>} GitHub API response with contributions data
- * @throws {Error} When API request fails
- */
-async function getGithubContributions() {
-    const query = `
-    query {
-        user(login: "${GITHUB_USERNAME}") {
-            contributionsCollection {
-                contributionCalendar {
-                    totalContributions
-                    weeks {
-                        contributionDays {
-                            contributionCount
-                            date
-                        }
-                    }
-                }
-            }
-        }
-    }`;
-
-    const options = {
-        hostname: 'api.github.com',
-        path: '/graphql',
-        method: 'POST',
-        headers: {
-            'Authorization': `bearer ${GITHUB_TOKEN}`,
-            'Content-Type': 'application/json',
-            'User-Agent': 'Node.js'
-        }
-    };
-
-    return new Promise((resolve, reject) => {
-        const req = https.request(options, (res) => {
-            let data = '';
-            res.on('data', chunk => data += chunk);
-            res.on('end', () => resolve(JSON.parse(data)));
-        });
-        
-        req.on('error', reject);
-        req.write(JSON.stringify({ query }));
-        req.end();
-    });
-}
-
-/**
- * GET /hello
- * Returns greeting message based on current enabled state
- * @route {GET} /hello
- * @example
- * url:port/hello
- * @returns {Object} JSON response with content
- */
-app.get('/hello', (req, res) => {
-    res.json({ content: isEnabled ? "Hello, World!" : "" });
+app.get('/display', (req, res) => {
+    res.json({ content: isEnabled ? newText : "" });
 });
 
-/**
- * GET /custom
- * Returns greeting message based on current enabled state
- * @example
- * url:port/custom?text=Hello%20World!
- * @route {GET} /custom
- * @returns {Object} JSON response with content
- */
-app.get('/custom', (req, res) => {
+app.get('/setDisplay', (req, res) => {
     const text = req.query.text;
+
+    newText = text;
     
-    res.json({ content: isEnabled ? text : "" });
+    res.json({ content: newText });
 });
 
-/**
- * GET /state
- * Updates and returns the enabled state
- * @route {GET} /state
- * @example
- * url:port/state?enabled=true
- * url:port/state?enabled=false
- * @param {boolean} req.query.enabled - New state value
- * @returns {Object} JSON response with current enabled state
- */
-app.get('/state', (req, res) => {
-    const enabled = req.query.enabled === 'true';
-    
-    isEnabled = enabled;
-    
-    res.json({ enabled });
+app.get('/show', (req, res) => {
+    const enabled = req.query.enabled;
+
+    if (enabled === 'true') {
+        isEnabled = true;
+    } else if (enabled === 'false') {
+        isEnabled = false;
+    } else {
+        return res.status(400).json({ error: "Invalid value for 'enabled'. Use 'true' or 'false'." });
+    }
+        
+    res.json({ isEnabled });
 });
 
-// Start server
+app.get('/shutdownOnNightEnabled', (req, res) => {
+    const enabled = req.query.enabled;
+
+    if (enabled === 'true') {
+        shutdownOnNightIsEnabled = true;
+    } else if (enabled === 'false') {
+        shutdownOnNightIsEnabled = false;
+        isEnabled = true;
+    } else {
+        return res.status(400).json({ error: "Invalid value for 'enabled'. Use 'true' or 'false'." });
+    }
+        
+    res.json({ shutdownOnNightIsEnabled });
+});
+
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on ${LOCALHOST}:${PORT}`);
 });

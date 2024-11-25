@@ -38,6 +38,32 @@ services:
 - 'Your port': Add the port you want to listen on; in my case, I use 3005 to avoid interference with other ports on my local server.
 - 'Your url server': Add your server's IP address here; in my case, I use `http://192.168.50.244`.
 
+## Use:
+
+In your DeskHub, use /display with the *content* parameter; there's no need to use any other endpoint.
+
+```
+url:port/display
+```
+
+With /setDisplay, you can change the displayed text, but for now, I'm not sure how to enable scrolling via an endpoint.
+
+```
+url:port/setDisplay?text=Hello
+```
+
+With /show, you can enable or disable the visibility of something on the screen.
+
+```
+url:port/show?enabled=true
+```
+
+With /shutdownOnNightEnabled, you can set it to turn off at 10 PM and turn back on at 8 AM.
+
+```
+url:port/shutdownOnNightEnabled?enabled=true
+```
+
 ## License
 
 [Apache License](LICENSE)
