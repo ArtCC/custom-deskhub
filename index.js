@@ -122,7 +122,22 @@ app.get('/contributions', async (req, res) => {
     try {
         const data = await getGithubContributions();
         const contributions = data.data.user.contributionsCollection.contributionCalendar;
-        res.json({ content: JSON.stringify(contributions) });
+        
+        // Convert to simple graph
+        const levels = ['.', '▁', '▂', '▃', '▄', '▅', '▆', '▇'];
+        const weeks = contributions.weeks;
+        let graph = '';
+        
+        weeks.forEach(week => {
+            week.contributionDays.forEach(day => {
+                const count = day.contributionCount;
+                let level = 0;
+                if (count > 0) level = Math.min(Math.ceil(count / 2), 7);
+                graph += levels[level];
+            });
+        });
+
+        res.json({ content: graph });
     } catch (error) {
         res.status(500).json({ content: "" });
     }
