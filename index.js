@@ -87,12 +87,22 @@ async function getGithubContributions() {
  * GET /hello
  * Returns greeting message based on current enabled state
  * @route {GET} /hello
+ * @example
+ * url:port/hello
  * @returns {Object} JSON response with content
  */
 app.get('/hello', (req, res) => {
-    res.json({ content: isEnabled ? "Hello, world!" : "" });
+    res.json({ content: isEnabled ? "Hello, World!" : "" });
 });
 
+/**
+ * GET /custom
+ * Returns greeting message based on current enabled state
+ * @example
+ * url:port/custom?text=Hello%20World!
+ * @route {GET} /custom
+ * @returns {Object} JSON response with content
+ */
 app.get('/custom', (req, res) => {
     const text = req.query.text;
     
