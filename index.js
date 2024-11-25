@@ -27,6 +27,7 @@ let isEnabled = true;
  */
 function updateStateByHour() {
     const hour = new Date().getHours();
+    
     isEnabled = hour >= 8 && hour < 22;
 }
 
@@ -92,6 +93,12 @@ app.get('/hello', (req, res) => {
     res.json({ content: isEnabled ? "Hello, world!" : "" });
 });
 
+app.get('/custom', (req, res) => {
+    const text = req.query.text;
+    
+    res.json({ content: isEnabled ? text : "" });
+});
+
 /**
  * GET /state
  * Updates and returns the enabled state
@@ -104,58 +111,10 @@ app.get('/hello', (req, res) => {
  */
 app.get('/state', (req, res) => {
     const enabled = req.query.enabled === 'true';
-    isEnabled = enabled;
-    res.json({ enabled });
-});
-
-/**
- * GET /contributions
- * Returns GitHub contributions calendar data if enabled
- * @route {GET} /contributions
- * @async
- * @returns {Object} JSON response with contributions data or empty content
- */
-app.get('/contributions', async (req, res) => {
-    if (!isEnabled) return res.json({ content: "" });
     
-    try {
-        const data = await getGithubContributions();
-        const weeks = data.data.user.contributionsCollection.contributionCalendar.weeks;
-        const yearContributions = [];
-        
-        // Get all days' contributions
-        weeks.forEach(week => {
-            week.contributionDays.forEach(day => {
-                yearContributions.push(day.contributionCount);
-            });
-        });
-
-        // Compress 365 days into 32 columns by averaging
-        const daysPerColumn = Math.ceil(yearContributions.length / 32);
-        const compressedData = [];
-        
-        for (let i = 0; i < 32; i++) {
-            const start = i * daysPerColumn;
-            const chunk = yearContributions.slice(start, start + daysPerColumn);
-            const average = chunk.reduce((a, b) => a + b, 0) / chunk.length;
-            compressedData.push(average);
-        }
-
-        const maxValue = Math.max(...compressedData);
-        
-        // Generate 32x7 display
-        let display = '';
-        for (let y = 6; y >= 0; y--) {
-            for (let x = 0; x < 32; x++) {
-                const threshold = (maxValue / 7) * (y + 1);
-                display += compressedData[x] >= threshold ? '█' : '.';
-            }
-        }
-
-        res.json({ content: display });
-    } catch (error) {
-        res.status(500).json({ content: "" });
-    }
+    isEnabled = enabled;
+    
+    res.json({ enabled });
 });
 
 // Start server
