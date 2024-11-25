@@ -1,4 +1,4 @@
-# Custom DesKhub
+# Custom DeskHub
 
 Node.js project to extend DeskHub functionality with custom features. Containerized with Docker and deployed using Docker Compose for easy setup.
 
@@ -30,9 +30,9 @@ services:
 
 ## Installation:
 
-- **'Your GitHub token': Create a token in your GitHub account and use it to fetch data from GitHub GraphQL.
-- **'Your port': Add the port you want to listen on; in my case, I use 3005 to avoid interference with other ports on my local server.
-- **'Your url server': Add your server's IP address here; in my case, I use `http://192.168.50.244`.
+- 'Your GitHub token': Create a token in your GitHub account and use it to fetch data from GitHub GraphQL.
+- 'Your port': Add the port you want to listen on; in my case, I use 3005 to avoid interference with other ports on my local server.
+- 'Your url server': Add your server's IP address here; in my case, I use `http://192.168.50.244`.
 
 ## License
 
