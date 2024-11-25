@@ -10,8 +10,3 @@ app.get('/hello', (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Servidor corriendo en ${LOCALHOST}:${PORT}`);
 });
-
-/**
- * Start server:
- * npx nodemon --env-file=.env index.js
- */
