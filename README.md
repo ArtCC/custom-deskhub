@@ -2,7 +2,7 @@
 
 Node.js project to extend DeskHub functionality with custom features. Containerized with Docker and deployed using Docker Compose for easy setup.
 
-'''
+```
 version: '3.8'
 services:
   app:
@@ -19,4 +19,4 @@ services:
              git clone https://github.com/ArtCC/custom-deskhub.git . &&
              npm install &&
              node index.js"
-'''
+```
