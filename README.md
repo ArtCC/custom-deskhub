@@ -8,6 +8,10 @@ Don’t you have a DeskHub? It was developed by Max Blade, and you can buy it at
 
 ![DeskHub](https://getdeskhub.com/_next/image?url=%2Fhero2.webp&w=1080&q=75)
 
+## Important:
+
+This project is a test project and the development is not fully completed.
+
 ## Installation:
 
 ```
