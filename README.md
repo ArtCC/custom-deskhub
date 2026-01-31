@@ -269,6 +269,11 @@ The easiest way to deploy is using the pre-built Docker image from GitHub Contai
    GITHUB_USERNAME=your_github_username
    PORT=3005
    LOCALHOST=http://192.168.1.100
+   
+   # Optional: Weather configuration
+   OPENWEATHER_API_KEY=your_openweather_api_key
+   OPENWEATHER_CITY=Madrid
+   OPENWEATHER_UNITS=metric
    ```
 
 2. **Create a `docker-compose.yml` file:**
@@ -287,6 +292,9 @@ The easiest way to deploy is using the pre-built Docker image from GitHub Contai
          - GITHUB_USERNAME=${GITHUB_USERNAME}
          - PORT=${PORT:-3005}
          - LOCALHOST=${LOCALHOST}
+         - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
+         - OPENWEATHER_CITY=${OPENWEATHER_CITY}
+         - OPENWEATHER_UNITS=${OPENWEATHER_UNITS:-metric}
        volumes:
          - ./data:/app/data
        networks:

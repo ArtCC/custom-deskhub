@@ -12,6 +12,9 @@ services:
       - GITHUB_USERNAME=${GITHUB_USERNAME}
       - PORT=${PORT:-3005}
       - LOCALHOST=${LOCALHOST}
+      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
+      - OPENWEATHER_CITY=${OPENWEATHER_CITY}
+      - OPENWEATHER_UNITS=${OPENWEATHER_UNITS:-metric}
     volumes:
       - ./data:/app/data
     networks:
