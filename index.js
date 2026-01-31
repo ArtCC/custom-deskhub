@@ -18,6 +18,11 @@ const GITHUB_USERNAME = process.env.GITHUB_USERNAME;
 const LOCALHOST = process.env.LOCALHOST;
 const PORT = process.env.PORT;
 
+// Optional weather configuration
+const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
+const OPENWEATHER_CITY = process.env.OPENWEATHER_CITY;
+const OPENWEATHER_UNITS = process.env.OPENWEATHER_UNITS || 'metric';
+
 const app = express();
 
 // Middleware
@@ -63,6 +68,54 @@ let commitsCache = {
   timestamp: null,
   TTL: 5 * 60 * 1000 // 5 minutes
 };
+
+// Cache for weather endpoint
+let weatherCache = {
+  data: null,
+  timestamp: null,
+  TTL: 15 * 60 * 1000 // 15 minutes
+};
+
+/**
+ * Maps weather condition codes to emojis
+ */
+function getWeatherEmoji(weatherId) {
+  // OpenWeatherMap weather condition codes
+  if (weatherId >= 200 && weatherId < 300) return '⛈️'; // Thunderstorm
+  if (weatherId >= 300 && weatherId < 400) return '🌦️'; // Drizzle
+  if (weatherId >= 500 && weatherId < 600) return '🌧️'; // Rain
+  if (weatherId >= 600 && weatherId < 700) return '🌨️'; // Snow
+  if (weatherId >= 700 && weatherId < 800) return '🌫️'; // Atmosphere (fog, mist, etc)
+  if (weatherId === 800) return '☀️'; // Clear
+  if (weatherId > 800) return '☁️'; // Clouds
+  return '🌤️'; // Default
+}
+
+/**
+ * Makes a request to OpenWeatherMap API
+ */
+function fetchWeather() {
+  return new Promise((resolve, reject) => {
+    if (!OPENWEATHER_API_KEY || !OPENWEATHER_CITY) {
+      reject(new Error('Weather API not configured'));
+      return;
+    }
+
+    const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(OPENWEATHER_CITY)}&appid=${OPENWEATHER_API_KEY}&units=${OPENWEATHER_UNITS}`;
+
+    https.get(url, (response) => {
+      let body = '';
+      response.on('data', (chunk) => body += chunk);
+      response.on('end', () => {
+        try {
+          resolve(JSON.parse(body));
+        } catch (error) {
+          reject(error);
+        }
+      });
+    }).on('error', reject);
+  });
+}
 
 /**
  * Makes a GraphQL request to GitHub API
@@ -193,6 +246,50 @@ app.get('/commits', async (req, res) => {
   }
 });
 
+app.get('/weather', async (req, res) => {
+  try {
+    // Check if weather is configured
+    if (!OPENWEATHER_API_KEY || !OPENWEATHER_CITY) {
+      return res.status(503).json({
+        error: 'Weather service not configured',
+        message: 'Please set OPENWEATHER_API_KEY and OPENWEATHER_CITY environment variables'
+      });
+    }
+
+    // Check cache first
+    const now = Date.now();
+    if (weatherCache.data && weatherCache.timestamp && (now - weatherCache.timestamp < weatherCache.TTL)) {
+      console.log('[INFO] Returning cached weather data');
+      return res.json({ content: weatherCache.data });
+    }
+
+    const weatherData = await fetchWeather();
+
+    if (weatherData.cod !== 200) {
+      console.error('[ERROR] Weather API error:', weatherData.message);
+      return res.status(500).json({ error: 'Weather API error', message: weatherData.message });
+    }
+
+    const temp = Math.round(weatherData.main.temp);
+    const city = weatherData.name;
+    const weatherId = weatherData.weather[0].id;
+    const emoji = getWeatherEmoji(weatherId);
+    const unit = OPENWEATHER_UNITS === 'imperial' ? '°F' : '°C';
+
+    const textResult = `${emoji} ${temp}${unit} ${city}`;
+
+    // Update cache
+    weatherCache.data = textResult;
+    weatherCache.timestamp = now;
+
+    console.log(`[INFO] Fetched weather for ${city}: ${temp}${unit}`);
+    res.json({ content: textResult });
+  } catch (error) {
+    console.error('[ERROR] Error fetching weather:', error.message);
+    res.status(500).json({ error: 'Failed to fetch weather data', message: error.message });
+  }
+});
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log('='.repeat(50));
   console.log('✅ Custom DeskHub Server Started');
@@ -200,10 +297,14 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🌐 Server URL: ${LOCALHOST}:${PORT}`);
   console.log(`👤 GitHub User: ${GITHUB_USERNAME}`);
   console.log(`📝 Display text loaded: "${newText}"`);
+  if (OPENWEATHER_API_KEY && OPENWEATHER_CITY) {
+    console.log(`🌤️  Weather: ${OPENWEATHER_CITY} (${OPENWEATHER_UNITS})`);
+  }
   console.log('='.repeat(50));
   console.log('Available endpoints:');
   console.log(`  GET  ${LOCALHOST}:${PORT}/display`);
   console.log(`  GET  ${LOCALHOST}:${PORT}/setDisplay?text=<text>`);
   console.log(`  GET  ${LOCALHOST}:${PORT}/commits`);
+  console.log(`  GET  ${LOCALHOST}:${PORT}/weather`);
   console.log('='.repeat(50));
 });

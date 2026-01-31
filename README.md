@@ -87,6 +87,11 @@ Before you begin, ensure you have:
    GITHUB_USERNAME=your_github_username
    PORT=3005
    LOCALHOST=http://192.168.1.100
+   
+   # Optional: Weather configuration
+   OPENWEATHER_API_KEY=your_openweather_api_key
+   OPENWEATHER_CITY=Madrid
+   OPENWEATHER_UNITS=metric
    ```
 
 4. **Start the server**
@@ -111,6 +116,11 @@ Before you begin, ensure you have:
 | `GITHUB_USERNAME` | Your GitHub username | `ArtCC` | ✅ Yes |
 | `PORT` | Server listening port | `3005` | ✅ Yes |
 | `LOCALHOST` | Server URL/IP address | `http://192.168.1.100` | ✅ Yes |
+| `OPENWEATHER_API_KEY` | OpenWeatherMap API Key ([Get free key](https://openweathermap.org/api)) | `abc123...` | ⚪ Optional |
+| `OPENWEATHER_CITY` | City name for weather | `Madrid` or `London,UK` | ⚪ Optional |
+| `OPENWEATHER_UNITS` | Temperature units | `metric` (°C) or `imperial` (°F) | ⚪ Optional (default: metric) |
+
+> **Note:** Weather variables are optional. The `/weather` endpoint requires `OPENWEATHER_API_KEY` and `OPENWEATHER_CITY` to be set.
 
 ### Creating a GitHub Token
 
@@ -205,6 +215,45 @@ curl "http://your-server:3005/commits"
 - ✅ Automatic caching (5 min TTL)
 - ✅ Formatted for DeskHub display
 - ✅ Counts commits from midnight UTC
+
+---
+
+### `GET /weather`
+
+Fetches current weather for a configured city. Results are cached for 15 minutes.
+
+> **Configuration required:** Set `OPENWEATHER_API_KEY` and `OPENWEATHER_CITY` environment variables.
+
+**Example:**
+```bash
+curl "http://your-server:3005/weather"
+```
+
+**Response:**
+```json
+{
+  "content": "☀️ 22°C Madrid"
+}
+```
+
+**Features:**
+- ✅ Automatic caching (15 min TTL)
+- ✅ Weather emoji based on conditions
+- ✅ Supports metric (°C) and imperial (°F) units
+- ✅ Compact single-line format
+
+**Weather Emojis:**
+- ☀️ Clear sky
+- ☁️ Cloudy
+- 🌧️ Rain
+- ⛈️ Thunderstorm
+- 🌨️ Snow
+- 🌫️ Fog/Mist
+
+**Get your free API key:**
+1. Go to [OpenWeatherMap](https://openweathermap.org/api)
+2. Sign up for a free account
+3. Generate an API key (free tier: 60 calls/min, 1M calls/month)
 
 ---
 
