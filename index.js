@@ -77,18 +77,18 @@ let weatherCache = {
 };
 
 /**
- * Maps weather condition codes to emojis
+ * Maps weather condition codes to text descriptions
  */
-function getWeatherEmoji(weatherId) {
+function getWeatherText(weatherId) {
   // OpenWeatherMap weather condition codes
-  if (weatherId >= 200 && weatherId < 300) return '⛈️'; // Thunderstorm
-  if (weatherId >= 300 && weatherId < 400) return '🌦️'; // Drizzle
-  if (weatherId >= 500 && weatherId < 600) return '🌧️'; // Rain
-  if (weatherId >= 600 && weatherId < 700) return '🌨️'; // Snow
-  if (weatherId >= 700 && weatherId < 800) return '🌫️'; // Atmosphere (fog, mist, etc)
-  if (weatherId === 800) return '☀️'; // Clear
-  if (weatherId > 800) return '☁️'; // Clouds
-  return '🌤️'; // Default
+  if (weatherId >= 200 && weatherId < 300) return 'Storm';
+  if (weatherId >= 300 && weatherId < 400) return 'Drizzle';
+  if (weatherId >= 500 && weatherId < 600) return 'Rain';
+  if (weatherId >= 600 && weatherId < 700) return 'Snow';
+  if (weatherId >= 700 && weatherId < 800) return 'Fog';
+  if (weatherId === 800) return 'Clear';
+  if (weatherId > 800) return 'Cloudy';
+  return 'N/A';
 }
 
 /**
@@ -273,16 +273,16 @@ app.get('/weather', async (req, res) => {
     const temp = Math.round(weatherData.main.temp);
     const city = weatherData.name;
     const weatherId = weatherData.weather[0].id;
-    const emoji = getWeatherEmoji(weatherId);
-    const unit = OPENWEATHER_UNITS === 'imperial' ? '°F' : '°C';
+    const condition = getWeatherText(weatherId);
+    const unit = OPENWEATHER_UNITS === 'imperial' ? 'F' : 'C';
 
-    const textResult = `${emoji} ${temp}${unit} ${city}`;
+    const textResult = `${city}: ${temp}${unit} ${condition}`;
 
     // Update cache
     weatherCache.data = textResult;
     weatherCache.timestamp = now;
 
-    console.log(`[INFO] Fetched weather for ${city}: ${temp}${unit}`);
+    console.log(`[INFO] Fetched weather for ${city}: ${temp}${unit} ${condition}`);
     res.json({ content: textResult });
   } catch (error) {
     console.error('[ERROR] Error fetching weather:', error.message);

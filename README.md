@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-yellow.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg)](https://www.docker.com/)
 
-A powerful Node.js backend service to extend [DeskHub](https://getdeskhub.com/) functionality with custom features, including real-time GitHub commit tracking and dynamic content display.
+A powerful Node.js backend service to extend [DeskHub](https://getdeskhub.com/) functionality with custom features, including real-time GitHub commit tracking, weather information, and dynamic content display.
 
 ![DeskHub](https://getdeskhub.com/_next/image?url=%2Fhero2.webp&w=1080&q=75)
 
@@ -32,12 +32,14 @@ A powerful Node.js backend service to extend [DeskHub](https://getdeskhub.com/) 
 
 - **🎯 Dynamic Content Display**: Control what your DeskHub displays in real-time
 - **📊 GitHub Integration**: Automatically fetch and display today's commit statistics
+- **🌤️ Weather Information**: Real-time weather data from OpenWeatherMap API
 - **💾 Persistent Storage**: Content persists between server restarts
-- **⚡ Smart Caching**: 5-minute cache for GitHub data to avoid rate limits
+- **⚡ Smart Caching**: 5-minute cache for GitHub, 15-minute cache for weather
 - **🔒 Environment Validation**: Ensures all required credentials are present
 - **🌐 CORS Enabled**: Ready for cross-origin requests
 - **📝 Structured Logging**: Comprehensive logging with timestamps
 - **🐳 Docker Ready**: Easy deployment with Docker Compose
+- **🔄 Health Checks**: Built-in health monitoring for container orchestration
 
 ---
 
@@ -45,9 +47,10 @@ A powerful Node.js backend service to extend [DeskHub](https://getdeskhub.com/) 
 
 - **Runtime**: Node.js 20+
 - **Framework**: Express.js 4.21+
-- **API**: GitHub GraphQL API
+- **APIs**: GitHub GraphQL API, OpenWeatherMap API
 - **Containerization**: Docker & Docker Compose
 - **Code Quality**: ESLint 9
+- **Development**: Nodemon
 - **Development**: Nodemon
 
 ---
@@ -156,6 +159,8 @@ Before you begin, ensure you have:
 
 ## 🔌 API Endpoints
 
+All endpoints return data in a format optimized for DeskHub display (ASCII text only, no emojis or special Unicode characters).
+
 ### `GET /display`
 
 Returns the current content to display on DeskHub.
@@ -167,10 +172,9 @@ Returns the current content to display on DeskHub.
 }
 ```
 
-**DeskHub Usage:**
-```
-http://your-server:3005/display
-```
+**DeskHub Configuration:**
+- **Endpoint:** `http://your-server:3005/display`
+- **Recommended fetch rate:** 60,000 ms (1 minute)
 
 ---
 
@@ -211,9 +215,14 @@ curl "http://your-server:3005/commits"
 }
 ```
 
+**DeskHub Configuration:**
+- **Endpoint:** `http://your-server:3005/commits`
+- **Recommended fetch rate:** 180,000 ms (3 minutes)
+
 **Features:**
 - ✅ Automatic caching (5 min TTL)
-- ✅ Formatted for DeskHub display
+- ✅ Formatted for DeskHub display (ASCII only)
+- ✅ Counts commits from midnight UTC
 - ✅ Counts commits from midnight UTC
 
 ---
@@ -232,23 +241,28 @@ curl "http://your-server:3005/weather"
 **Response:**
 ```json
 {
-  "content": "☀️ 22°C Madrid"
+  "content": "Madrid: 22C Clear"
 }
 ```
 
+**DeskHub Configuration:**
+- **Endpoint:** `http://your-server:3005/weather`
+- **Recommended fetch rate:** 600,000 ms (10 minutes)
+
 **Features:**
 - ✅ Automatic caching (15 min TTL)
-- ✅ Weather emoji based on conditions
-- ✅ Supports metric (°C) and imperial (°F) units
+- ✅ ASCII-only format (no Unicode/emojis - DeskHub compatible)
+- ✅ Supports metric (C) and imperial (F) units
 - ✅ Compact single-line format
 
-**Weather Emojis:**
-- ☀️ Clear sky
-- ☁️ Cloudy
-- 🌧️ Rain
-- ⛈️ Thunderstorm
-- 🌨️ Snow
-- 🌫️ Fog/Mist
+**Weather Conditions:**
+- Clear - Clear sky
+- Cloudy - Cloudy
+- Rain - Rainy weather
+- Storm - Thunderstorm
+- Snow - Snowy weather
+- Fog - Fog/Mist
+- Drizzle - Light rain
 
 **Get your free API key:**
 1. Go to [OpenWeatherMap](https://openweathermap.org/api)
@@ -423,7 +437,7 @@ custom-deskhub/
 ### Server won't start
 
 **Error:** `Missing required environment variables`
-- **Solution:** Ensure your `.env` file contains all required variables
+- **Solution:** Ensure your `.env` file contains all required variables (GITHUB_TOKEN, GITHUB_USERNAME, PORT, LOCALHOST)
 
 ### GitHub API errors
 
@@ -431,6 +445,18 @@ custom-deskhub/
 - **Solution 1:** Check your GitHub token is valid
 - **Solution 2:** Ensure token has correct scopes (`read:user`)
 - **Solution 3:** Check GitHub API rate limits
+
+### Weather endpoint returns 503
+
+**Error:** `Weather service not configured`
+- **Solution:** Set `OPENWEATHER_API_KEY` and `OPENWEATHER_CITY` in your `.env` file
+- **Note:** Weather configuration is optional - other endpoints will work without it
+
+### DeskHub shows Unicode characters instead of text
+
+**Issue:** Seeing weird symbols like `\u2600` or `°C` showing as boxes
+- **Solution:** This has been fixed - all endpoints now return ASCII-only text
+- **Note:** Make sure you're using the latest version of the server
 
 ### Docker container exits immediately
 
@@ -469,7 +495,26 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 - **Max Blade** for creating the amazing DeskHub device
 - **GitHub** for their GraphQL API
+- **OpenWeatherMap** for their free weather API
 - The Node.js and Express.js communities
+
+---
+
+## 📝 Additional Notes
+
+### DeskHub Display Compatibility
+
+This server is optimized for DeskHub's display limitations:
+- ✅ ASCII-only text (no emojis or Unicode symbols)
+- ✅ Single-line compact formats
+- ✅ Clear, readable information
+
+### Recommended Fetch Rates
+
+Configure your DeskHub with these recommended fetch intervals:
+- **`/display`**: 60,000 ms (1 minute) - For dynamic content
+- **`/commits`**: 180,000 ms (3 minutes) - Aligns with 5-min cache
+- **`/weather`**: 600,000 ms (10 minutes) - Aligns with 15-min cache
 
 ---
 
