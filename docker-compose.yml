@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  custom-deskhub:
+    image: ghcr.io/artcc/custom-deskhub:latest
+    container_name: custom-deskhub
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3005}:${PORT:-3005}"
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_USERNAME=${GITHUB_USERNAME}
+      - PORT=${PORT:-3005}
+      - LOCALHOST=${LOCALHOST}
+    volumes:
+      - ./data:/app/data
+    networks:
+      - deskhub-network
+    healthcheck:
+      test: ["CMD", "sh", "-c", "node -e \"require('http').get('http://localhost:' + process.env.PORT + '/display', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})\""]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+networks:
+  deskhub-network:
+    driver: bridge
+
+volumes:
+  data:

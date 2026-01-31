@@ -187,55 +187,105 @@ curl "http://your-server:3005/commits"
 
 ## 🐳 Docker Deployment
 
-### Using Docker Compose
+### Quick Start with Pre-built Image
 
-Create a `docker-compose.yml` file:
+The easiest way to deploy is using the pre-built Docker image from GitHub Container Registry:
 
-```yaml
-version: '3.8'
+1. **Create a `.env` file:**
+   ```env
+   GITHUB_TOKEN=your_github_token
+   GITHUB_USERNAME=your_github_username
+   PORT=3005
+   LOCALHOST=http://192.168.1.100
+   ```
 
-services:
-  custom-deskhub:
-    image: node:20-alpine
-    container_name: custom-deskhub
-    working_dir: /app
-    restart: unless-stopped
-    ports:
-      - "3005:3005"
-    environment:
-      - GITHUB_TOKEN=${GITHUB_TOKEN}
-      - GITHUB_USERNAME=${GITHUB_USERNAME}
-      - PORT=3005
-      - LOCALHOST=http://192.168.1.100
-    volumes:
-      - ./data.json:/app/data.json
-    command: >
-      sh -c "apk add --no-cache git &&
-             git clone https://github.com/ArtCC/custom-deskhub.git . &&
-             npm install &&
-             node index.js"
-    networks:
-      - deskhub-network
+2. **Create a `docker-compose.yml` file:**
+   ```yaml
+   version: '3.8'
 
-networks:
-  deskhub-network:
-    driver: bridge
-```
+   services:
+     custom-deskhub:
+       image: ghcr.io/artcc/custom-deskhub:latest
+       container_name: custom-deskhub
+       restart: unless-stopped
+       ports:
+         - "${PORT:-3005}:${PORT:-3005}"
+       environment:
+         - GITHUB_TOKEN=${GITHUB_TOKEN}
+         - GITHUB_USERNAME=${GITHUB_USERNAME}
+         - PORT=${PORT:-3005}
+         - LOCALHOST=${LOCALHOST}
+       volumes:
+         - ./data:/app/data
+       networks:
+         - deskhub-network
+       healthcheck:
+         test: ["CMD", "sh", "-c", "node -e \"require('http').get('http://localhost:' + process.env.PORT + '/display', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})\""]
+         interval: 30s
+         timeout: 3s
+         retries: 3
+         start_period: 10s
 
-**Run with Docker:**
+   networks:
+     deskhub-network:
+       driver: bridge
+   ```
+
+3. **Run the container:**
+   ```bash
+   docker-compose up -d
+   ```
+
+**Docker Commands:**
 ```bash
-docker-compose up -d
-```
-
-**View logs:**
-```bash
+# View logs
 docker-compose logs -f
+
+# Check container health
+docker-compose ps
+
+# Restart container
+docker-compose restart
+
+# Stop container
+docker-compose down
+
+# Pull latest image
+docker-compose pull && docker-compose up -d
 ```
 
-**Stop the service:**
+### Building Your Own Image
+
+If you want to build the image locally:
+
 ```bash
-docker-compose down
+# Build the image
+docker build -t custom-deskhub:local .
+
+# Run with custom image
+docker run -d \
+  --name custom-deskhub \
+  -p 3005:3005 \
+  -e GITHUB_TOKEN=your_token \
+  -e GITHUB_USERNAME=your_username \
+  -e PORT=3005 \
+  -e LOCALHOST=http://192.168.1.100 \
+  -v $(pwd)/data:/app/data \
+  custom-deskhub:local
 ```
+
+### Automated Builds
+
+Every push to `main` branch automatically:
+- ✅ Builds a new Docker image
+- ✅ Pushes to GitHub Container Registry
+- ✅ Tags with `latest` and commit SHA
+- ✅ Supports multi-platform (amd64, arm64)
+
+**Image Tags:**
+- `latest` - Latest stable version from main branch
+- `v1.0.0` - Specific version tags
+- `main-abc123` - Commit-specific builds
 
 ---
 
@@ -271,14 +321,19 @@ This project uses ESLint with the following rules:
 
 ```
 custom-deskhub/
-├── index.js              # Main application file
-├── data.json             # Persistent storage (auto-generated)
-├── package.json          # Project dependencies
-├── eslint.config.js      # ESLint configuration
-├── docker-compose.yml    # Docker deployment config
-├── .env                  # Environment variables (create this)
-├── LICENSE               # Apache 2.0 License
-└── README.md             # This file
+├── .github/
+│   └── workflows/
+│       └── docker-publish.yml  # CI/CD pipeline
+├── index.js                    # Main application file
+├── data.json                   # Persistent storage (auto-generated)
+├── package.json                # Project dependencies
+├── eslint.config.js            # ESLint configuration
+├── Dockerfile                  # Docker image definition
+├── .dockerignore               # Docker build exclusions
+├── docker-compose.yml          # Docker Compose configuration
+├── .env                        # Environment variables (create this)
+├── LICENSE                     # Apache 2.0 License
+└── README.md                   # This file
 ```
 
 ---
