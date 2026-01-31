@@ -171,14 +171,14 @@ app.get('/commits', async (req, res) => {
     const totalCommits = contributions?.totalCommitContributions || 0;
     const repositories = contributions?.commitContributionsByRepository || [];
 
-    let textResult = `Commits today: ${totalCommits}`;
+    let textResult = `Today: ${totalCommits} commit${totalCommits !== 1 ? 's' : ''}`;
 
     if (repositories.length > 0) {
-      textResult += '\n\nRepositories:\n';
-      repositories.forEach(repo => {
+      const repoList = repositories.map(repo => {
         const commits = repo.contributions.nodes.length;
-        textResult += `- ${repo.repository.name}: ${commits} commit${commits !== 1 ? 's' : ''}\n`;
-      });
+        return `${repo.repository.name}: ${commits}`;
+      }).join(', ');
+      textResult += ` (${repoList})`;
     }
 
     // Update cache

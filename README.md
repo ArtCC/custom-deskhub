@@ -116,8 +116,31 @@ Before you begin, ensure you have:
 
 1. Go to [GitHub Settings → Developer Settings → Personal Access Tokens](https://github.com/settings/tokens)
 2. Click "Generate new token (classic)"
-3. Select scopes: `read:user` and `repo` (or `public_repo` for public repos only)
-4. Copy the generated token
+3. **Select scopes based on your needs:**
+
+   **Option A: Public repositories only (Recommended for most users)**
+   ```
+   ☑️ read:user
+   ```
+   This is sufficient to read your profile and commits from public repositories.
+
+   **Option B: Include private repositories**
+   ```
+   ☑️ read:user
+   ☑️ repo (full access to private repositories)
+   ```
+   Use this if you want to see commits from your private repositories.
+
+   **What the token is used for:**
+   - ✅ Read user profile information
+   - ✅ Fetch commit statistics and contributions
+   - ✅ List repositories where you've committed
+   - ❌ No write access - read-only
+
+4. Set an expiration date (recommended: 90 days or no expiration for personal use)
+5. Click "Generate token" and copy it immediately (you won't see it again!)
+
+> **⚠️ Security Note:** Never share your token or commit it to repositories. Use environment variables only.
 
 ---
 
@@ -174,7 +197,7 @@ curl "http://your-server:3005/commits"
 **Response:**
 ```json
 {
-  "content": "Commits today: 5\n\nRepositories:\n- custom-deskhub: 3 commits\n- my-project: 2 commits"
+  "content": "Today: 5 commits (custom-deskhub: 3, my-project: 2)"
 }
 ```
 
@@ -221,7 +244,7 @@ The easiest way to deploy is using the pre-built Docker image from GitHub Contai
          - deskhub-network
        healthcheck:
          test: ["CMD", "sh", "-c", "node -e \"require('http').get('http://localhost:' + process.env.PORT + '/display', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})\""]
-         interval: 30s
+         interval: 60s
          timeout: 3s
          retries: 3
          start_period: 10s
